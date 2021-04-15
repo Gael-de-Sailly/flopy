@@ -387,9 +387,26 @@ class PathlineFile:
         # plist = []
         # for partid in self.nid:
         #     plist.append(self.get_data(partid=partid, totim=totim, ge=ge))
+        if totim is not None:
+            if ge:
+                idx = self._data['time'] >= totim
+            else:
+                idx = self._data['time'] <= totim
+        else:
+            idx = slice(None, None, None) # All values
+        self._ta = self._data[idx]
+        names = ["x", "y", "z", "time", "k", "particleid"]
+        ta2 = np.rec.fromarrays(
+            (self._ta[name] for name in names), dtype=self.outdtype
+        )
+        entries = collections.defaultdict(list)
+        i = 0
+        for pid in self._ta['particleid']:
+            entries[pid].append(i)
+            i += 1
+
         return [
-            self.get_data(partid=partid, totim=totim, ge=ge)
-            for partid in self.nid
+            ta2[entries[partid]] for partid in self.nid
         ]
 
     def get_destination_pathline_data(self, dest_cells, to_recarray=False):
