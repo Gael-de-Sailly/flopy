@@ -1516,9 +1516,26 @@ class TimeseriesFile:
         >>> ts = tsobj.get_alldata()
 
         """
+        if totim is not None:
+            if ge:
+                idx = self._data['time'] >= totim
+            else:
+                idx = self._data['time'] <= totim
+        else:
+            idx = slice(None, None, None) # All values
+        ta = self._data[idx]
+        names = ["x", "y", "z", "time", "k", "particleid"]
+        ta2 = np.rec.fromarrays(
+            (ta[name] for name in names), dtype=self.outdtype
+        )
+        index = collections.defaultdict(list)
+        i = 0
+        for pid in ta['particleid']:
+            index[pid].append(i)
+            i += 1
+
         return [
-            self.get_data(partid=partid, totim=totim, ge=ge)
-            for partid in self.nid
+            ta2[index[partid]] for partid in self.nid
         ]
 
     def get_destination_timeseries_data(self, dest_cells):
